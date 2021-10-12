@@ -1,0 +1,58 @@
+EXERCISE 1
+
+1. Write the select command that will obtain the title
+and book number
+2. Write a command that selects title number 10
+3. Write a command that dials the reader number and penalty
+4. Write the command with which to get
+book and author number for all books that
+author is Charles Dickens or Jane Austen
+5. Write a command that selects a title number and title for
+all records of the "adventure" string
+where in the title.
+6. Write a command that dials the reader number, the penalty
+and a paid penalty for all who are not yet
+SQL - basic commands - final exercise
+they paid.
+7. Write a command that select all pairs
+cities and states with an adult array.
+
+EXERCISE 2
+
+1. Write a command that selects all the titles in the table
+title and displays them in alphabetical order.
+2. Write a command that:
+- selects library number, book isbn and value
+written penalties for all rentals for which
+SQL - basic commands - final exercise
+a penalty was charged
+- create a computation column like a double value
+well_appreciated column
+- create alias 'double fine' for this column
+Exercise 2 - manipulation
+the resulting set
+3. Write the command that
+- column column that contains columns: column
+library library, initialized middle name and last name for
+all the movies of the library who are called Anderson
+- name the resulting column "email_name"
+- modification of the order, execution by the execution of the "list of elections
+e-mail logins ”services by activity and change
+modify the command, execute by executing the "suggestion list"
+e-mail logins ”services by activity and change
+library, with the initiation of the middle name and the first book
+capital letters (all lower case letters).
+- use the SUBSTRING function to obtain a part of the wire
+character and LOWER for lower case letters
+- use the (+) operator to execute strings.
+4. Write a command that selects title and title_no from the array
+title.
+The result should be a single column with the format as in
+presentation below:
+The title is: Poems, title number 7
+So the query should have the expected value of the column in the results
+o setting that combines 4 elements:
+character character "Title is:"
+title value
+character character "title number"
+value of the column title_no
