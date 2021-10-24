@@ -1,0 +1,39 @@
+Exercise 1
+
+Write a command that calculates the value of sales for each
+orders and the result sorted in male order
+(according to sales value).
+2. Modify the query from step 1 so that the first 10
+poems
+SQL - aggregation operations - final exercise
+poems
+3. Modify the query from point 2 to get the first 10
+products including equivalent. Results.
+
+Exercise 2
+
+1. Provide ordered product units for products about
+identifier <3
+2. Modify the query from point 1. So that it appears
+ordered product units for all products
+3. Enter the order value for each order for which
+the number of product units ordered is> 250
+SQL - aggregation operations - final exercise
+the number of product units ordered is> 250
+
+Exercise 3
+
+1. Write a command that calculates the total quantity ordered
+goods and arranges according to productid and orderid
+rollup calculations.
+2. Modify the query from point 1. so that the result only to
+product number 50.
+3. What are the null values ​​in the product ID and order?
+SQL - aggregation operations - final exercise
+3. What are the null values ​​in the product ID and order?
+4. Modify the command in step 1. Using the operator cube
+summary. Also use the GROUP function on the productid and columns
+order to distinguish between totals and differences
+lines in the collection
+5. Which lines are summaries?
+summarize by product and by order?
