@@ -1,0 +1,43 @@
+EXERCISE 1
+
+1.Please provide the total ordered unit for each order
+and the name of the client.
+2. Modify the previous example to show only such an order,
+for which the units were ordered are greater than
+250.
+3. For each order, enter the total value of that order and
+customer name.
+4. Modify the previous example to show only such an order,
+for which the unit counts are greater than 250.
+5. Modify the previous example to add the name and
+surname of the employee servicing the order
+
+Exercise 2
+
+1. For each product (name), enter a total
+goods ordered by customers.
+2. For each product category (name), enter a total value
+writing
+3. Sort the results in the query from point 2 by:
+a) value of value
+SQL - Operations Operations Copyright © 2011 IISG
+b) goods ordered by customers.
+Exercise 3
+1. For each fixed (name), better specify which ones
+in 1997 they transported
+2. Which of the findings was the most active
+Ask) in 1997, specify the setting for this setting
+3. Which employee served the limited allowance in 1997,
+provide the name and surname of such employee
+
+Exercise 4
+
+1. For each employee (name and surname), enter a total value
+order handled by this employee
+2. Which of the employees served the most active (he handled orders
+with a given value) in 1997, give the name and surname
+worker's
+3. Restrictions on the score from point 1 to employees only
+3. Restrictions on the score from point 1 to employees only
+a) who have subordinates
+b) who have no subordinates
