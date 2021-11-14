@@ -67,7 +67,15 @@ ON p.CategoryID = Categories.CategoryID
 WHERE Categories.CategoryName = 'Confections'
 
 -- 1. Napisz polecenie, które wyświetla pracowników oraz ich podwładnych
-
+SELECT a.EmployeeID, b.EmployeeID
+FROM Employees a
+INNER JOIN Employees b
+ON a.EmployeeID = b.ReportsTo
 
 -- 2. Napisz polecenie, które wyświetla pracowników, którzy nie mają podwładnych
-
+SELECT a.EmployeeID
+FROM Employees a
+LEFT JOIN Employees b
+ON a.EmployeeID = b.ReportsTo
+GROUP BY a.EmployeeID
+HAVING COUNT(b.EmployeeID) = 0
