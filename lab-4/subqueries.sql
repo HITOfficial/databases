@@ -82,7 +82,6 @@ p_outer.UnitPrice, (SELECT AVG(UnitPrice) FROM Products),
 ABS(p_outer.UnitPrice - (SELECT AVG(UnitPrice) FROM Products))
 FROM Products p_outer
 
-
 --2. Dla każdego produktu podaj jego nazwę kategorii, nazwę produktu, cenę, średnią cenę wszystkich produktów danej kategorii oraz różnicę między ceną produktu a średnią ceną wszystkich produktów danej kategorii
 SELECT (SELECT c.CategoryName 
 FROM Categories c 
@@ -133,17 +132,48 @@ WHERE (
 
 --Cw 5
 --1. Dla każdego pracownika (imię i nazwisko) podaj łączną wartość zamówień obsłużonych przez tego pracownika (przy obliczaniu wartości zamówień uwzględnij cenę za przesyłkę
-SELECT (SELECT e.FirstName+ ' ' + e.LastName FROM Employees e WHERE e.EmployeeID = o.EmployeeID) AS 'Employee', o.Freight + (SELECT SUM(od.UnitPrice * od.Quantity * (1-od.Discount)) FROM [Order Details] od WHERE o.OrderID = od.OrderID) AS 'Total Order'
-FROM Orders o
 
+SELECT e.FirstName, e.LastName,
+(SELECT SUM(od.Quantity*od.UnitPrice*(1-od.Discount)) FROM [Order Details] od WHERE
+	od.OrderID IN (SELECT o.OrderID FROM Orders o WHERE o.EmployeeID= e.EmployeeID)) 
++ (SELECT SUM(o.Freight) FROM Orders o WHERE o.EmployeeID = e.EmployeeID) AS 'Total Orders Cost'
+FROM Employees e
 
 --2. Który z pracowników obsłużył najaktywniejszy (obsłużył zamówienia o największej wartości) w 1997r, podaj imię i nazwisko takiego pracownika
-
+SELECT TOP 1 e.FirstName, e.LastName,
+(SELECT SUM(od.Quantity*od.UnitPrice*(1-od.Discount)) FROM [Order Details] od WHERE
+	od.OrderID IN (SELECT o.OrderID FROM Orders o WHERE o.EmployeeID= e.EmployeeID AND YEAR(o.OrderDate) = 1997)) 
++ (SELECT SUM(o.Freight) FROM Orders o WHERE o.EmployeeID = e.EmployeeID AND YEAR(o.OrderDate) = 1997) AS 'Total Orders Cost'
+FROM Employees e
+ORDER BY 3 DESC
 
 --3. Ogranicz wynik z pkt 1 tylko do pracowników
 --a) którzy mają podwładnych
-
+SELECT TOP 1 e.FirstName, e.LastName,
+(SELECT SUM(od.Quantity*od.UnitPrice*(1-od.Discount)) FROM [Order Details] od WHERE
+	od.OrderID IN (SELECT o.OrderID FROM Orders o WHERE o.EmployeeID= e.EmployeeID AND YEAR(o.OrderDate) = 1997)) 
++ (SELECT SUM(o.Freight) FROM Orders o WHERE o.EmployeeID = e.EmployeeID AND YEAR(o.OrderDate) = 1997) AS 'Total Orders Cost'
+FROM Employees e
+WHERE (SELECT COUNT(ee.ReportsTo) FROM Employees ee WHERE e.EmployeeID = ee.ReportsTo) > 0
+ORDER BY 3 DESC
 
 --b) którzy nie mają podwładnych
---4. Zmodyfikuj rozwiązania z pkt 3 tak aby dla pracowników pokazać jeszcze datę
---ostatnio obsłużonego zamówienia
+SELECT TOP 1 e.FirstName, e.LastName,
+(SELECT SUM(od.Quantity*od.UnitPrice*(1-od.Discount)) FROM [Order Details] od WHERE
+	od.OrderID IN (SELECT o.OrderID FROM Orders o WHERE o.EmployeeID= e.EmployeeID AND YEAR(o.OrderDate) = 1997)) 
++ (SELECT SUM(o.Freight) FROM Orders o WHERE o.EmployeeID = e.EmployeeID AND YEAR(o.OrderDate) = 1997) AS 'Total Orders Cost'
+FROM Employees e
+WHERE (SELECT COUNT(ee.ReportsTo) FROM Employees ee WHERE e.EmployeeID = ee.ReportsTo) = 0
+ORDER BY 3 DESC
+
+--4. Zmodyfikuj rozwiązania z pkt 3 tak aby dla pracowników pokazać jeszcze datę ostatnio obsłużonego zamówienia
+SELECT TOP 1 e.FirstName, e.LastName,
+(SELECT SUM(od.Quantity*od.UnitPrice*(1-od.Discount)) FROM [Order Details] od WHERE
+	od.OrderID IN (SELECT o.OrderID FROM Orders o WHERE o.EmployeeID= e.EmployeeID AND YEAR(o.OrderDate) = 1997)) 
++ (SELECT SUM(o.Freight) FROM Orders o WHERE o.EmployeeID = e.EmployeeID AND YEAR(o.OrderDate) = 1997) AS 'Total Orders Cost',
+(SELECT MAX(o.OrderDate) FROM Orders o WHERE e.EmployeeID = o.EmployeeID) AS 'Last executed order'
+FROM Employees e
+WHERE (
+	SELECT COUNT(ee.ReportsTo) FROM Employees ee WHERE e.EmployeeID = ee.ReportsTo
+	) = 0
+ORDER BY 3 DESC
