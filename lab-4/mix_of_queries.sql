@@ -351,3 +351,61 @@ HAVING (
 		WHERE Shippers.CompanyName <> 'United Package'
 	) AND YEAR(Orders.OrderDate) = 1997 AND MONTH(Orders.OrderDate) = 12 AND Categories.CategoryID = c.CategoryID
 ) = 0
+
+-- Wybierz klientów, którzy kupili przedmioty wyłącznie z jednej kategorii w marcu 1997 i wypisz nazwę tej kategorii
+SELECT c.CompanyName, ca.CategoryName
+FROM Customers c
+INNER JOIN Orders o
+ON c.CustomerID = o.CustomerID
+INNER JOIN [Order Details] od
+ON o.OrderID = od.OrderID
+INNER JOIN Products p
+ON od.ProductID = p.ProductID
+INNER JOIN Categories ca
+ON p.CategoryID = ca.CategoryID
+WHERE YEAR(o.OrderDate) = 1997 AND MONTH(o.OrderDate) = 3
+GROUP BY c.CompanyName, ca.CategoryID, ca.CategoryName, c.CustomerID
+HAVING COUNT(o.OrderID) > 0 AND (SELECT COUNT(Orders.OrderID)
+	FROM Orders
+	INNER JOIN [Order Details]
+	ON Orders.OrderID = [Order Details].OrderID
+	INNER JOIN Products 
+	ON [Order Details].ProductID = Products.ProductID
+	INNER JOIN Categories
+	ON Products.CategoryID = Categories.CategoryID AND Categories.CategoryID <> ca.CategoryID AND c.CustomerID = Orders.CustomerID AND YEAR(Orders.OrderDate) = 1997 AND MONTH(Orders.OrderDate) = 3
+) = 0
+ORDER BY 1 DESC
+
+-- Wybierz tytuły książek, gdzie ilość wypożyczeń książki jest większa od średniej ilości wypożyczeń książek tego samego autora.
+USE library
+SELECT t.title, (
+	SELECT COUNT(loanhist.title_no) FROM loanhist
+	WHERE t.title_no = loanhist.title_no
+) AS 'AVG borrows',
+(
+	SELECT COUNT(loanhist.title_no)
+	FROM loanhist
+	WHERE loanhist.title_no IN (
+		SELECT title_no FROM title
+		WHERE title.author = t.author
+	)
+) / (
+	SELECT COUNT(title.title_no)
+	FROM title 
+	WHERE title.author = t.author) AS 'AVG  author books borrows'
+FROM title t
+GROUP BY t.title, t.title_no, t.author
+HAVING (
+	SELECT COUNT(loanhist.title_no) FROM loanhist
+	WHERE t.title_no = loanhist.title_no
+) > (
+	SELECT COUNT(loanhist.title_no)
+	FROM loanhist
+	WHERE loanhist.title_no IN (
+		SELECT title_no FROM title
+		WHERE title.author = t.author
+	)
+) / (
+	SELECT COUNT(title.title_no)
+	FROM title 
+	WHERE title.author = t.author)
