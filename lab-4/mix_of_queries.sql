@@ -409,3 +409,60 @@ HAVING (
 	SELECT COUNT(title.title_no)
 	FROM title 
 	WHERE title.author = t.author)
+
+-- 3)Dla każdego dziecka zapisanego w bibliotece wyświetl jego imię i nazwisko, adres zamieszkania, imię i nazwisko rodzica (opiekuna) oraz liczbę wypożyczonych książek w grudniu 2001 roku przez dziecko i opiekuna. *) Uwzględnij tylko te dzieci, dla których liczba wypożyczonych książek jest większa od 1
+SELECT m.firstname+ ' ' + m.lastname AS 'CHILDREN',
+(SELECT member.firstname + ' ' + member.lastname FROM member WHERE j.adult_member_no = member.member_no) AS 'PARENT',
+(SELECT adult.street + ' ' + adult.city FROM adult WHERE j.adult_member_no = adult.member_no) AS 'ADRESS', 
+(SELECT COUNT(*) 
+FROM loanhist
+WHERE YEAR(loanhist.due_date) = 2001 AND MONTH(loanhist.due_date) = 12 AND loanhist.member_no = m.member_no
+) + (
+	SELECT COUNT(*) 
+	FROM loanhist
+	WHERE YEAR(loanhist.due_date) = 2001 AND MONTH(loanhist.due_date) = 12 AND loanhist.member_no = j.adult_member_no
+) AS 'TOTAL BORROWED BOOKS' 
+FROM member m
+INNER JOIN juvenile j
+ON m.member_no = j.member_no
+WHERE (
+	SELECT COUNT(*) FROM loanhist
+	WHERE YEAR(loanhist.due_date) = 2001 AND MONTH(loanhist.due_date) = 12 AND loanhist.member_no = m.member_no
+) > 1
+
+-- Dla każdego produktu podaj nazwę jego kategorii, nazwę produktu, cenę, średnią cenę wszystkich produktów danej kategorii, różnicę między ceną produktu a średnią ceną wszystkich produktów danej kategorii, dodatkowo dla każdego produktu podaj wartośc jego sprzedaży w marcu 1997
+USE Northwind
+SELECT p.ProductName,
+(SELECT CategoryName FROM Categories WHERE Categories.CategoryID = p.CategoryID) AS 'Category', p.UnitPrice, (SELECT AVG(Products.UnitPrice) FROM Products WHERE p.CategoryID = Products.CategoryID) AS 'Category AVG', 
+ABS((SELECT AVG(Products.UnitPrice) FROM Products WHERE p.CategoryID = Products.CategoryID) - p.UnitPrice) AS 'ABS AVG DIFFERENCE',
+ISNULL((SELECT SUM(od.UnitPrice*od.Quantity*(1-od.Discount)) 
+FROM [Order Details] od 
+INNER JOIN Orders o
+ON od.OrderID = o.OrderID
+WHERE od.ProductID = p.ProductID AND YEAR(o.OrderDate) = 1997 AND MONTH(o.OrderDate) = 3
+),0) AS 'SELLS SUM IN 03/2001'
+FROM Products p
+
+-- Napisz polecenie, które wyświetla listę dzieci będących członkami biblioteki. Interesuje nas imię, nazwisko, data urodzenia dziecka, adres zamieszkania, imię i nazwisko rodzica oraz liczba aktualnie wypożyczonych książek.
+USE library
+SELECT m.firstname+ ' ' + m.lastname AS 'CHILDREN',
+j.birth_date,
+(SELECT member.firstname + ' ' + member.lastname FROM member WHERE j.adult_member_no = member.member_no) AS 'PARENT',
+(SELECT adult.street + ' ' + adult.city FROM adult WHERE j.adult_member_no = adult.member_no) AS 'ADRESS', (
+SELECT COUNT(*) 
+FROM loan l
+WHERE l.member_no = m.member_no
+)
+FROM member m
+INNER JOIN juvenile j
+ON m.member_no = j.member_no
+
+-- Który klient złożył największą liczbę zamówień, a który zamówienia o najwyższej łącznej wartości (podaj nazwy i numer telefonu tych klientów)
+USE Northwind
+SELECT c.CompanyName, c.Phone FROM Customers c
+WHERE c.CustomerID = (
+	SELECT TOP 1 o.CustomerID FROM Orders o
+	INNER JOIN [Order Details] od
+	ON o.OrderID = od.OrderID
+	SUM(od.Quantity*od.UnitPrice*(1-od.Discount)) 
+)
