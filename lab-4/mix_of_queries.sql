@@ -1,5 +1,4 @@
-﻿
--- Nazwy klientów którzy złożyli zamówienia w dniu 23/05/1997 oraz jeśli obsługiwali te zamówienia pracownicy którzy mają podwłanych to ich wypisz (imie i nazwisko)
+﻿-- Nazwy klientów którzy złożyli zamówienia w dniu 23/05/1997 oraz jeśli obsługiwali te zamówienia pracownicy którzy mają podwłanych to ich wypisz (imie i nazwisko)
 USE Northwind
 SELECT c.CompanyName,
 (SELECT e.EmployeeID
@@ -464,5 +463,87 @@ WHERE c.CustomerID = (
 	SELECT TOP 1 o.CustomerID FROM Orders o
 	INNER JOIN [Order Details] od
 	ON o.OrderID = od.OrderID
-	SUM(od.Quantity*od.UnitPrice*(1-od.Discount)) 
+	GROUP BY o.CustomerID
+	ORDER BY SUM(od.Quantity*od.UnitPrice*(1-od.Discount)) DESC
 )
+UNION
+SELECT c.CompanyName, c.Phone FROM Customers c
+WHERE c.CustomerID = (
+	SELECT TOP 1 o.CustomerID FROM Orders o
+	GROUP BY o.CustomerID
+	ORDER BY COUNT(*) DESC
+)
+
+-- Dla każdego klienta podaj imię i nazwisko pracownika, który w 1997r obsłużył najwięcej jego zamówień, podaj także liczbę tych zamówień (jeśli jest kilku takich pracownikow to wystarczy podać imię nazwisko jednego nich). Zbiór wynikowy powinien zawierać nazwę klienta, imię i nazwisko pracownika oraz liczbę obsłużonych zamówień. (baza northwind)
+SELECT c.CompanyName, (
+	SELECT TOP 1 e.FirstName + ' ' + e.LastName 
+	FROM Employees e
+	INNER JOIN Orders o
+	ON e.EmployeeID = o.EmployeeID
+	WHERE o.CustomerID = c.CustomerID AND YEAR(o.OrderDate) = 1997
+	GROUP BY e.FirstName, e.LastName ,e.EmployeeID
+	ORDER BY COUNT(e.EmployeeID) DESC
+) AS 'Employee Name', (
+	SELECT COUNT(*) FROM Orders
+	WHERE Orders.CustomerID = c.CustomerID AND Orders.EmployeeID = (
+		SELECT TOP 1 e.EmployeeID
+		FROM Employees e
+		INNER JOIN Orders o
+		ON e.EmployeeID = o.EmployeeID
+		WHERE o.CustomerID = c.CustomerID AND YEAR(o.OrderDate) = 1997
+		GROUP BY e.EmployeeID
+		ORDER BY COUNT(e.EmployeeID) DESC
+	)
+) AS 'Orders Number'
+FROM Customers c
+
+-- Podaj liczbę zamówień oraz wartość zamówień (uwzględnij opłatę za przesyłkę) obsłużonych przez każdego pracownika w lutym 1997. Za datę obsłużenia zamówienia należy uznać datę jego złożenia (orderdate). Jeśli pracownik nie obsłużył w tym okresie żadnego zamówienia, to też powinien pojawić się na liście (liczba obsłużonych zamówień oraz ich wartość jest w takim przypadku równa 0). Zbiór wynikowy powinien zawierać: imię i nazwisko pracownika, liczbę obsłużonych zamówień, wartość obsłużonych zamówień. (baza northwind)
+SELECT e.FirstName, e.LastName,
+ISNULL(
+	(SELECT SUM(Orders.Freight) 
+	FROM Orders 
+	WHERE YEAR(Orders.OrderDate) = 1997 AND MONTH(Orders.OrderDate) = 2 AND Orders.EmployeeID = e.EmployeeID) +
+	(SELECT SUM(od.Quantity*od.UnitPrice*(1-od.Discount))
+	FROM [Order Details] od 
+	WHERE od.OrderID IN ( 
+		SELECT Orders.OrderID 
+		FROM Orders
+		WHERE YEAR(Orders.OrderDate) = 1997 AND MONTH(Orders.OrderDate) = 2 AND Orders.EmployeeID = e.EmployeeID)
+	)
+,0) AS 'Orders Cost',
+(SELECT COUNT(Orders.OrderID)
+FROM Orders
+WHERE YEAR(Orders.OrderDate) = 1997 AND MONTH(Orders.OrderDate) = 2 AND Orders.EmployeeID = e.EmployeeID) AS 'Orders Realized'
+FROM Employees e
+
+ -- Podaj listę dzieci będących członkami biblioteki, które w dniu '2001-12-14' zwróciły do biblioteki książkę o tytule 'Walking'. Zbiór wynikowy powinien zawierać imię i nazwisko oraz dane adresowe dziecka. (baza library) 
+USE library
+SELECT m.firstname, m.lastname, a.city, a.state, a.street
+FROM member m
+INNER JOIN juvenile j
+ON m.member_no = j.member_no
+INNER JOIN adult a ON j.adult_member_no = a.member_no
+WHERE m.member_no IN (
+	SELECT member_no FROM loanhist
+	WHERE m.member_no = loanhist.member_no 
+	AND YEAR(loanhist.in_date) = 2001 AND MONTH(loanhist.in_date) = 12 AND DAY(loanhist.in_date) = 14 
+	AND loanhist.title_no = (
+		SELECT title.title_no
+		FROM title
+		WHERE title.title = 'Walking'
+	)
+)
+
+-- Podaj produkty, dostawców i kategorie produktów które były zamówione 1997 roku pomiedzy 20 a 25 lutym
+USE Northwind
+SELECT DISTINCT c.CategoryName, p.ProductName, e.FirstName, e.LastName  
+FROM Orders o
+INNER JOIN [Order Details] od
+ON o.OrderID = od.OrderID
+INNER JOIN Products p
+ON od.ProductID = p.ProductID
+INNER JOIN Categories c
+ON p.CategoryID = c.CategoryID
+INNER JOIN Employees e
+ON e.EmployeeID = o.EmployeeID
+WHERE YEAR(o.OrderDate) = 1997 AND MONTH(o.OrderDate) = 2 AND DAY(o.OrderDate) BETWEEN 20 AND 25
