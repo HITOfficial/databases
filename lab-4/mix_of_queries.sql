@@ -517,3 +517,50 @@ ON p.CategoryID = c.CategoryID
 INNER JOIN Employees e
 ON e.EmployeeID = o.EmployeeID
 WHERE YEAR(o.OrderDate) = 1997 AND MONTH(o.OrderDate) = 2 AND DAY(o.OrderDate) BETWEEN 20 AND 25
+
+-- produkt, ktory w 1996 roku ktorego totalna sprzedaz byla najmniejsza
+USE Northwind
+SELECT p.ProductName FROM Products p
+WHERE p.ProductID IN (
+	SELECT od.ProductID FROM [Order Details] od
+	INNER JOIN Orders o 
+	ON od.OrderID = o.OrderID
+	WHERE YEAR(o.OrderDate) = 1996
+	GROUP BY od.ProductID
+	HAVING SUM(od.UnitPrice*od.Quantity*(1-od.Discount)) = (
+		SELECT TOP 1 SUM(oodd.UnitPrice*oodd.Quantity*(1-oodd.Discount)) FROM [Order Details] oodd
+		WHERE oodd.OrderID IN (
+			SELECT Orders.OrderID FROM Orders
+			WHERE YEAR(Orders.OrderDate) = 1996
+		)
+		GROUP BY oodd.ProductID
+		ORDER BY  1 
+	)
+)
+
+--  wszyscy uzytkownicy biblioteki, ktorzy nigdy nie wyporzyczyli ksiazki
+USE library
+SELECT m.firstname, m.lastname,
+(SELECT adult.street FROM adult
+WHERE adult.member_no = j.adult_member_no
+) AS 'Adress', 'juvenile' AS 'juvenile/ adult number of childrens'
+FROM member m
+INNER JOIN juvenile j
+ON m.member_no = j.member_no
+WHERE m.member_no NOT IN (
+	SELECT loanhist.member_no FROM loanhist
+	UNION
+	SELECT loan.member_no FROM loan
+)
+UNION ALL
+SELECT m.firstname, m.lastname, a.street+ ' ' + a.city, Str((
+	SELECT COUNT(juvenile.adult_member_no) FROM juvenile WHERE juvenile.adult_member_no = a.member_no
+))
+FROM member m
+INNER JOIN adult a
+ON m.member_no = a.member_no
+WHERE m.member_no NOT IN (
+	SELECT loanhist.member_no FROM loanhist
+	UNION
+	SELECT loan.member_no FROM loan
+)
