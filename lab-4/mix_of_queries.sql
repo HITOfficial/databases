@@ -71,22 +71,22 @@ WHERE YEAR(o.OrderDate) = 1997 AND c.CategoryID = (
 )
 
 -- Dane pracownika i najczęstszy dostawca pracowników bez podwładnych
-USE Northwind
-SELECT e.FirstName, e.LastName, s.CompanyName FROM Employees e
-RIGHT JOIN Employees ee
-ON e.EmployeeID = ee.ReportsTo
-CROSS JOIN Suppliers s
-WHERE s.SupplierID = (
-	SELECT TOP 1 ss.SupplierID FROM Suppliers ss
-	INNER JOIN Products p 
-	ON ss.SupplierID = p.SupplierID
-	INNER JOIN [Order Details] od
-	ON p.ProductID = od.ProductID
-	GROUP BY ss.SupplierID
-	ORDER BY COUNT(od.OrderID) DESC
+SELECT e.FirstName, e.LastName, (
+	SELECT s.CompanyName FROM Suppliers s
+	WHERE s.SupplierID = (
+		SELECT TOP 1 o.ShipVia
+		FROM Orders o
+		WHERE e.EmployeeID = o.EmployeeID
+		GROUP BY o.ShipVia
+		ORDER BY COUNT(o.ShipVia) DESC
+	)
 )
-GROUP BY e.EmployeeID, e.FirstName, e.LastName, s.CompanyName 
-HAVING COUNT(ee.EmployeeID) = 0
+FROM Employees e
+WHERE (
+	SELECT COUNT(ee.EmployeeID)
+	FROM Employees ee
+	WHERE ee.ReportsTo = e.EmployeeID
+	) = 0
 
 -- Wypisz wszystkich czlonków biblioteki z adresami i info czy jest dzieckiem czy nie i ilosc wypozyczen w poszczególnych latach i miesiacach.
 USE library
@@ -153,58 +153,27 @@ WHERE c.CustomerID NOT IN (
 )
 
 -- Dla kazdego klienta najczesciej zamawiana kategorie w dwóch wersjach.
-USE Northwind
-SELECT c.CompanyName, ca.CategoryName, COUNT(ca.CategoryID)
-FROM CUSTOMERS c
-INNER JOIN Orders o
-ON c.CustomerID = o.CustomerID
-INNER JOIN [Order Details] od
-ON o.OrderID = od.OrderID
-INNER JOIN Products p
-ON od.ProductID = p.ProductID
-INNER JOIN Categories ca
-ON p.ProductID = ca.CategoryID
-WHERE ca.CategoryID = (
-	SELECT TOP 1 Categories.CategoryID
-	FROM Categories
-	INNER JOIN Products
-	ON Categories.CategoryID =  Products.CategoryID
-	INNER JOIN [Order Details]
-	ON Products.ProductID=  [Order Details].ProductID
+SELECT Customers.CompanyName, (
+	SELECT TOP 1 COUNT(c.CategoryID) FROM Categories c
+	INNER JOIN Products p
+	ON c.CategoryID = p.CategoryID
+	INNER JOIN [Order Details] od
+	ON p.ProductID = od.ProductID
 	INNER JOIN Orders
-	ON [Order Details].OrderID = Orders.OrderID
-	INNER JOIN Customers
-	ON Orders.CustomerID = Customers.CustomerID
-	WHERE Customers.CustomerID = c.CustomerID
-	GROUP BY Customers.CustomerID, Categories.CategoryID
-	ORDER BY COUNT(Categories.CategoryID) DESC
-)
-GROUP BY c.CompanyName, ca.CategoryName
-
-SELECT c.CompanyName, ca.CategoryName, COUNT(ca.CategoryID)
-FROM CUSTOMERS c
-INNER JOIN Orders o
-ON c.CustomerID = o.CustomerID
-INNER JOIN [Order Details] od
-ON o.OrderID = od.OrderID
-INNER JOIN Products p
-ON od.ProductID = p.ProductID
-INNER JOIN Categories ca
-ON p.ProductID = ca.CategoryID
-GROUP BY c.CustomerID, c.CompanyName, ca.CategoryName
-HAVING ca.CategoryName = (
-	SELECT TOP 1 Categories.CategoryName
-	FROM Categories
-	INNER JOIN Products
-	ON Categories.CategoryID =  Products.CategoryID
-	INNER JOIN [Order Details]
-	ON Products.ProductID=  [Order Details].ProductID
+	ON od.OrderID = Orders.OrderID AND Orders.CustomerID = Customers.CustomerID
+	ORDER BY COUNT(c.CategoryID) DESC
+) AS 'Category Count', (
+	SELECT TOP 1 c.CategoryName FROM Categories c
+	INNER JOIN Products p
+	ON c.CategoryID = p.CategoryID
+	INNER JOIN [Order Details] od
+	ON p.ProductID = od.ProductID
 	INNER JOIN Orders
-	ON [Order Details].OrderID = Orders.OrderID
-	WHERE Orders.CustomerID = c.CustomerID
-	GROUP BY Orders.CustomerID, Categories.CategoryName
-	ORDER BY COUNT(Categories.CategoryName) DESC
-)
+	ON od.OrderID = Orders.OrderID AND Orders.CustomerID = Customers.CustomerID
+	GROUP BY c.CategoryName
+	ORDER BY COUNT(c.CategoryID) DESC
+) AS 'Category Name'
+FROM Customers
 
  --Podział na company, year month i suma freight
  SELECT c.CompanyName, YEAR(o.OrderDate), MONTH(o.OrderDate), o.Freight + SUM(od.Quantity*od.UnitPrice*(1-od.Discount))
@@ -432,7 +401,8 @@ WHERE (
 -- Dla każdego produktu podaj nazwę jego kategorii, nazwę produktu, cenę, średnią cenę wszystkich produktów danej kategorii, różnicę między ceną produktu a średnią ceną wszystkich produktów danej kategorii, dodatkowo dla każdego produktu podaj wartośc jego sprzedaży w marcu 1997
 USE Northwind
 SELECT p.ProductName,
-(SELECT CategoryName FROM Categories WHERE Categories.CategoryID = p.CategoryID) AS 'Category', p.UnitPrice, (SELECT AVG(Products.UnitPrice) FROM Products WHERE p.CategoryID = Products.CategoryID) AS 'Category AVG', 
+(SELECT CategoryName FROM Categories WHERE Categories.CategoryID = p.CategoryID) AS 'Category',
+p.UnitPrice, (SELECT AVG(Products.UnitPrice) FROM Products WHERE p.CategoryID = Products.CategoryID) AS 'Category AVG', 
 ABS((SELECT AVG(Products.UnitPrice) FROM Products WHERE p.CategoryID = Products.CategoryID) - p.UnitPrice) AS 'ABS AVG DIFFERENCE',
 ISNULL((SELECT SUM(od.UnitPrice*od.Quantity*(1-od.Discount)) 
 FROM [Order Details] od 
